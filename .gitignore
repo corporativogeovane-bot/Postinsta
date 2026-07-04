@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.env
+*.log
+server/data/*.sqlite
+server/generated/*
+!server/generated/.gitkeep
+client/.vite/
+*.tsbuildinfo
+
+.DS_Store
+google-service-account.json
