@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db } from "../db.js";
 import { GENERATED_DIR } from "../config.js";
-import { processPost, saveExistingPostToDrive } from "../services/postService.js";
+import { processPost, saveExistingPostToDropbox } from "../services/postService.js";
 import type { Post } from "../types.js";
 
 export const postsRouter = Router();
@@ -40,15 +40,15 @@ postsRouter.get("/:id/download", (req, res) => {
   res.download(filePath, `${safeName || "post"}.jpg`);
 });
 
-postsRouter.post("/:id/save-to-drive", async (req, res) => {
+postsRouter.post("/:id/save-to-dropbox", async (req, res) => {
   const post = getStmt.get(Number(req.params.id)) as Post | undefined;
   if (!post) return res.status(404).json({ error: "Post não encontrado." });
 
   try {
-    const result = await saveExistingPostToDrive(post);
-    res.json({ driveFileId: result.id, driveFileLink: result.link });
+    const result = await saveExistingPostToDropbox(post);
+    res.json({ dropboxPath: result.path, dropboxLink: result.link });
   } catch (err) {
-    res.status(400).json({ error: err instanceof Error ? err.message : "Erro ao salvar no Drive." });
+    res.status(400).json({ error: err instanceof Error ? err.message : "Erro ao salvar no Dropbox." });
   }
 });
 

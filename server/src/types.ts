@@ -21,14 +21,14 @@ export interface Post {
   hashtags: string | null;
   status: PostStatus;
   error_message: string | null;
-  drive_file_id: string | null;
-  drive_file_link: string | null;
+  dropbox_path: string | null;
+  dropbox_link: string | null;
   created_at: string;
 }
 
 export interface Settings {
   image_format: "square" | "portrait";
   ai_enabled: boolean;
-  drive_auto_save: boolean;
-  drive_folder_id: string;
+  dropbox_auto_save: boolean;
+  dropbox_folder_path: string;
 }

@@ -5,7 +5,7 @@ import { GENERATED_DIR } from "../config.js";
 import { generateCaption, generateFallbackImage } from "./aiService.js";
 import { generateInstagramImage, dimensionsFor, type BackgroundMode } from "./imageGenerator.js";
 import { detectBrand, buildBrandSymbolPrompt, fetchBrandLogo } from "./entityImageService.js";
-import { uploadImageToDrive, isDriveConfigured } from "./driveService.js";
+import { uploadImageToDropbox, isDropboxConfigured } from "./dropboxService.js";
 import { getSettings } from "./settingsService.js";
 import type { Post } from "../types.js";
 
@@ -26,7 +26,7 @@ async function downloadImage(url: string): Promise<Buffer | null> {
 const updateStmt = db.prepare(`
   UPDATE posts
   SET status = ?, image_path = ?, caption = ?, hashtags = ?, error_message = ?,
-      drive_file_id = ?, drive_file_link = ?
+      dropbox_path = ?, dropbox_link = ?
   WHERE id = ?
 `);
 
@@ -94,19 +94,19 @@ export async function processPost(
       }
     }
 
-    let driveFileId: string | null = null;
-    let driveFileLink: string | null = null;
-    if (settings.drive_auto_save && settings.drive_folder_id && isDriveConfigured()) {
+    let dropboxPath: string | null = null;
+    let dropboxLink: string | null = null;
+    if (settings.dropbox_auto_save && isDropboxConfigured()) {
       try {
-        const uploaded = await uploadImageToDrive(imageBuffer, fileName, settings.drive_folder_id);
-        driveFileId = uploaded.id;
-        driveFileLink = uploaded.webViewLink;
+        const uploaded = await uploadImageToDropbox(imageBuffer, fileName, settings.dropbox_folder_path);
+        dropboxPath = uploaded.path;
+        dropboxLink = uploaded.link;
       } catch (err) {
-        console.error("Falha ao salvar no Google Drive:", err);
+        console.error("Falha ao salvar no Dropbox:", err);
       }
     }
 
-    updateStmt.run("ready", fileName, caption, hashtags, null, driveFileId, driveFileLink, postId);
+    updateStmt.run("ready", fileName, caption, hashtags, null, dropboxPath, dropboxLink, postId);
   } catch (err) {
     console.error("Falha ao processar post:", err);
     updateStmt.run(
@@ -132,19 +132,18 @@ export function getPostById(id: number): Post | undefined {
   return getPostStmt.get(id) as Post | undefined;
 }
 
-export async function saveExistingPostToDrive(post: Post): Promise<{ id: string; link: string }> {
+export async function saveExistingPostToDropbox(post: Post): Promise<{ path: string; link: string }> {
   if (!post.image_path) throw new Error("Post ainda não possui imagem gerada.");
   const settings = getSettings();
-  if (!settings.drive_folder_id) throw new Error("Configure o ID da pasta do Google Drive.");
   const filePath = path.join(GENERATED_DIR, post.image_path);
   const buffer = await fs.readFile(filePath);
-  const uploaded = await uploadImageToDrive(buffer, post.image_path, settings.drive_folder_id);
+  const uploaded = await uploadImageToDropbox(buffer, post.image_path, settings.dropbox_folder_path);
 
-  db.prepare("UPDATE posts SET drive_file_id = ?, drive_file_link = ? WHERE id = ?").run(
-    uploaded.id,
-    uploaded.webViewLink,
+  db.prepare("UPDATE posts SET dropbox_path = ?, dropbox_link = ? WHERE id = ?").run(
+    uploaded.path,
+    uploaded.link,
     post.id
   );
 
-  return { id: uploaded.id, link: uploaded.webViewLink };
+  return uploaded;
 }

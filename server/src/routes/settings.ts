@@ -1,17 +1,17 @@
 import { Router } from "express";
 import { getSettings, updateSettings } from "../services/settingsService.js";
-import { isDriveConfigured } from "../services/driveService.js";
+import { isDropboxConfigured } from "../services/dropboxService.js";
 import { checkAllFeeds } from "../services/feedMonitor.js";
 
 export const settingsRouter = Router();
 
 settingsRouter.get("/", (_req, res) => {
-  res.json({ ...getSettings(), drive_credentials_present: isDriveConfigured() });
+  res.json({ ...getSettings(), dropbox_configured: isDropboxConfigured() });
 });
 
 settingsRouter.put("/", (req, res) => {
   const next = updateSettings(req.body ?? {});
-  res.json({ ...next, drive_credentials_present: isDriveConfigured() });
+  res.json({ ...next, dropbox_configured: isDropboxConfigured() });
 });
 
 settingsRouter.post("/check-now", async (_req, res) => {

@@ -24,8 +24,8 @@ export const api = {
   listPosts: () => request<Post[]>("/api/posts"),
   deletePost: (id: number) => request<void>(`/api/posts/${id}`, { method: "DELETE" }),
   regeneratePost: (id: number) => request<{ status: string }>(`/api/posts/${id}/regenerate`, { method: "POST" }),
-  saveToDrive: (id: number) =>
-    request<{ driveFileId: string; driveFileLink: string }>(`/api/posts/${id}/save-to-drive`, {
+  saveToDropbox: (id: number) =>
+    request<{ dropboxPath: string; dropboxLink: string }>(`/api/posts/${id}/save-to-dropbox`, {
       method: "POST",
     }),
 

@@ -14,9 +14,9 @@ export const config = {
     | "square"
     | "portrait",
   aiEnabled: (process.env.AI_ENABLED ?? "true") !== "false",
-  google: {
-    keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE ?? "./google-service-account.json",
-    folderId: process.env.GOOGLE_DRIVE_FOLDER_ID ?? "",
-    autoSave: (process.env.GOOGLE_DRIVE_AUTO_SAVE ?? "false") === "true",
+  dropbox: {
+    accessToken: process.env.DROPBOX_ACCESS_TOKEN ?? "",
+    folderPath: process.env.DROPBOX_FOLDER_PATH ?? "/Postinsta",
+    autoSave: (process.env.DROPBOX_AUTO_SAVE ?? "false") === "true",
   },
 };

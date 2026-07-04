@@ -10,4 +10,3 @@ client/.vite/
 *.tsbuildinfo
 
 .DS_Store
-google-service-account.json

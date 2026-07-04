@@ -15,7 +15,7 @@ const statusLabels: Record<Post["status"], string> = {
 
 export function PostCard({ post, onChanged }: PostCardProps) {
   const [busy, setBusy] = useState(false);
-  const [driveMessage, setDriveMessage] = useState<string | null>(null);
+  const [dropboxMessage, setDropboxMessage] = useState<string | null>(null);
 
   async function handleDelete() {
     if (!confirm("Remover este post?")) return;
@@ -38,16 +38,16 @@ export function PostCard({ post, onChanged }: PostCardProps) {
     }
   }
 
-  async function handleSaveToDrive() {
+  async function handleSaveToDropbox() {
     setBusy(true);
-    setDriveMessage(null);
+    setDropboxMessage(null);
     try {
-      const result = await api.saveToDrive(post.id);
-      setDriveMessage("Salvo no Google Drive!");
+      const result = await api.saveToDropbox(post.id);
+      setDropboxMessage("Salvo no Dropbox!");
       onChanged();
       void result;
     } catch (err) {
-      setDriveMessage(err instanceof Error ? err.message : "Erro ao salvar no Drive.");
+      setDropboxMessage(err instanceof Error ? err.message : "Erro ao salvar no Dropbox.");
     } finally {
       setBusy(false);
     }
@@ -85,8 +85,8 @@ export function PostCard({ post, onChanged }: PostCardProps) {
           >
             Baixar imagem
           </a>
-          <button className="btn" disabled={busy || !post.image_path} onClick={handleSaveToDrive}>
-            {post.drive_file_link ? "Salvo no Drive ✓" : "Salvar no Drive"}
+          <button className="btn" disabled={busy || !post.image_path} onClick={handleSaveToDropbox}>
+            {post.dropbox_link ? "Salvo no Dropbox ✓" : "Salvar no Dropbox"}
           </button>
           <button className="btn" disabled={busy} onClick={handleRegenerate}>
             Gerar novamente
@@ -96,12 +96,12 @@ export function PostCard({ post, onChanged }: PostCardProps) {
           </button>
         </div>
 
-        {post.drive_file_link && (
-          <a className="drive-link" href={post.drive_file_link} target="_blank" rel="noreferrer">
-            Ver no Google Drive
+        {post.dropbox_link && (
+          <a className="dropbox-link" href={post.dropbox_link} target="_blank" rel="noreferrer">
+            Ver no Dropbox
           </a>
         )}
-        {driveMessage && <p className="drive-message">{driveMessage}</p>}
+        {dropboxMessage && <p className="dropbox-message">{dropboxMessage}</p>}
       </div>
     </div>
   );

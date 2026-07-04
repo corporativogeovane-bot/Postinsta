@@ -30,8 +30,8 @@ db.exec(`
     hashtags TEXT,
     status TEXT NOT NULL DEFAULT 'processing',
     error_message TEXT,
-    drive_file_id TEXT,
-    drive_file_link TEXT,
+    dropbox_path TEXT,
+    dropbox_link TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(feed_id, guid)
   );
@@ -45,8 +45,8 @@ db.exec(`
 const defaultSettings: Record<string, string> = {
   image_format: config.imageFormat,
   ai_enabled: String(config.aiEnabled),
-  drive_auto_save: String(config.google.autoSave),
-  drive_folder_id: config.google.folderId,
+  dropbox_auto_save: String(config.dropbox.autoSave),
+  dropbox_folder_path: config.dropbox.folderPath,
 };
 
 const insertSetting = db.prepare(

@@ -58,33 +58,33 @@ export function SettingsPage() {
       </section>
 
       <section className="settings-section">
-        <h2>Google Drive</h2>
+        <h2>Dropbox</h2>
         <p className="settings-hint">
-          Credenciais da service account:{" "}
-          {settings.drive_credentials_present ? (
-            <strong style={{ color: "#22c55e" }}>encontradas ✓</strong>
+          Token de acesso:{" "}
+          {settings.dropbox_configured ? (
+            <strong style={{ color: "#22c55e" }}>configurado ✓</strong>
           ) : (
             <strong style={{ color: "#f87171" }}>
-              não encontradas (veja o README para configurar)
+              não configurado (veja o README para configurar)
             </strong>
           )}
         </p>
         <label>
-          ID da pasta no Drive
+          Pasta no Dropbox
           <input
             type="text"
-            placeholder="1AbCdEfGhIjKlmNoPQRstuvWXyz"
-            defaultValue={settings.drive_folder_id}
-            onBlur={(e) => save({ drive_folder_id: e.target.value.trim() })}
+            placeholder="/Postinsta"
+            defaultValue={settings.dropbox_folder_path}
+            onBlur={(e) => save({ dropbox_folder_path: e.target.value.trim() || "/Postinsta" })}
           />
         </label>
         <label className="switch-row">
-          <span>Salvar automaticamente cada post gerado no Drive</span>
+          <span>Salvar automaticamente cada post gerado no Dropbox</span>
           <label className="switch">
             <input
               type="checkbox"
-              checked={settings.drive_auto_save}
-              onChange={(e) => save({ drive_auto_save: e.target.checked })}
+              checked={settings.dropbox_auto_save}
+              onChange={(e) => save({ dropbox_auto_save: e.target.checked })}
             />
             <span />
           </label>

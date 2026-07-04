@@ -3,7 +3,7 @@
 Monitora feeds RSS de notícias e gera automaticamente, para cada notícia nova,
 uma imagem já no formato do Instagram com o **título da notícia em destaque
 sobre a foto**. Você acompanha tudo por um painel web, baixa a imagem pronta
-e, se quiser, salva automaticamente uma cópia numa pasta do Google Drive.
+e, se quiser, salva automaticamente uma cópia numa pasta do Dropbox.
 
 > O app **não publica automaticamente no Instagram** (a API oficial exige
 > conta Business/Creator vinculada a uma Página do Facebook). Ele entrega a
@@ -27,7 +27,7 @@ e, se quiser, salva automaticamente uma cópia numa pasta do Google Drive.
 - Gera automaticamente uma sugestão de legenda + hashtags via IA gratuita.
 - Permite baixar a imagem gerada com um clique.
 - Permite salvar automaticamente (ou sob demanda) cada imagem gerada numa
-  pasta do seu Google Drive.
+  pasta do seu Dropbox.
 
 ## Estrutura
 
@@ -57,26 +57,25 @@ Abra `http://localhost:5173`.
    também pode clicar em **"Checar feeds agora"** na aba Posts.
 3. **Posts gerados**: cada notícia nova vira um card com a imagem pronta,
    legenda sugerida e hashtags. Use **Baixar imagem** para salvar no seu
-   computador, ou **Salvar no Drive** para subir para o Google Drive.
+   computador, ou **Salvar no Dropbox** para subir para o Dropbox.
 4. **Configurações**: escolha o formato da imagem (quadrado/retrato), ligue
-   ou desligue a IA gratuita, e configure a pasta do Google Drive.
+   ou desligue a IA gratuita, e configure a pasta do Dropbox.
 
-## Configurando o Google Drive (opcional)
+## Configurando o Dropbox (opcional)
 
-1. Crie um projeto no [Google Cloud Console](https://console.cloud.google.com/).
-2. Ative a **Google Drive API** para o projeto.
-3. Crie uma **Service Account** (IAM & Admin → Service Accounts) e gere uma
-   chave no formato JSON.
-4. Salve o arquivo JSON como `server/google-service-account.json` (ou aponte
-   `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` no `.env` para o caminho do arquivo).
-5. No Google Drive, crie (ou escolha) a pasta onde as imagens devem ser
-   salvas, compartilhe essa pasta com o **e-mail da service account**
-   (algo como `nome@projeto.iam.gserviceaccount.com`, encontrado no JSON) com
-   permissão de Editor.
-6. Copie o ID da pasta (a parte final da URL da pasta no Drive) e cole em
-   Configurações → Google Drive → "ID da pasta no Drive".
-7. Ative "Salvar automaticamente" se quiser que toda imagem gerada suba
-   sozinha para o Drive.
+1. Acesse [dropbox.com/developers/apps](https://www.dropbox.com/developers/apps)
+   e clique em "Create app".
+2. Escolha **"Scoped access"** e, em "Access type", **"Full Dropbox"** (ou
+   "App folder" se preferir restringir a uma pasta exclusiva do app).
+3. Na aba **Permissions** do app criado, ative os escopos `files.content.write`,
+   `files.content.read` e `sharing.write`, depois clique em "Submit".
+4. Na aba **Settings**, na seção "OAuth 2", clique em **"Generate"** para
+   criar um Access Token e copie o valor gerado.
+5. Cole o token em `DROPBOX_ACCESS_TOKEN` no `server/.env`.
+6. Defina `DROPBOX_FOLDER_PATH` com o caminho da pasta onde salvar (ex:
+   `/Postinsta`) — ela é criada automaticamente no primeiro envio.
+7. Ative "Salvar automaticamente" em Configurações se quiser que toda imagem
+   gerada suba sozinha para o Dropbox.
 
 ## IA gratuita
 
@@ -118,9 +117,9 @@ Veja `server/.env.example` para a lista completa e comentada. As principais:
 | `CHECK_INTERVAL_MINUTES` | Frequência de checagem automática dos feeds |
 | `IMAGE_FORMAT` | `square` ou `portrait` (padrão inicial) |
 | `AI_ENABLED` | Liga/desliga a IA gratuita |
-| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | Caminho do JSON da service account |
-| `GOOGLE_DRIVE_FOLDER_ID` | ID da pasta de destino no Drive |
-| `GOOGLE_DRIVE_AUTO_SAVE` | Salva automaticamente no Drive a cada post gerado |
+| `DROPBOX_ACCESS_TOKEN` | Token de acesso gerado no app do Dropbox |
+| `DROPBOX_FOLDER_PATH` | Pasta de destino no Dropbox (padrão `/Postinsta`) |
+| `DROPBOX_AUTO_SAVE` | Salva automaticamente no Dropbox a cada post gerado |
 
 ## Build de produção
 
