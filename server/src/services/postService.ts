@@ -4,7 +4,7 @@ import { db } from "../db.js";
 import { GENERATED_DIR } from "../config.js";
 import { generateCaption, generateFallbackImage } from "./aiService.js";
 import { generateInstagramImage, dimensionsFor, type BackgroundMode } from "./imageGenerator.js";
-import { findBrandLogoForTitle } from "./entityImageService.js";
+import { detectBrand, buildBrandSymbolPrompt, fetchBrandLogo } from "./entityImageService.js";
 import { uploadImageToDrive, isDriveConfigured } from "./driveService.js";
 import { getSettings } from "./settingsService.js";
 import type { Post } from "../types.js";
@@ -46,10 +46,25 @@ export async function processPost(
     }
 
     if (!backgroundImage) {
-      const brandLogo = await findBrandLogoForTitle(input.title);
-      if (brandLogo) {
-        backgroundImage = brandLogo;
-        backgroundMode = "logo";
+      const brand = detectBrand(input.title);
+      if (brand) {
+        // Prioriza a IA desenhando o símbolo da marca bem grande (em vez do
+        // logo oficial exato), como pedido: só o ícone, quase preenchendo o quadro.
+        if (settings.ai_enabled) {
+          backgroundImage = await generateFallbackImage(
+            buildBrandSymbolPrompt(brand.displayName),
+            width,
+            height
+          );
+        }
+        // Se a IA estiver desligada ou falhar, cai para o logo oficial exato.
+        if (!backgroundImage) {
+          const logo = await fetchBrandLogo(brand.domain);
+          if (logo) {
+            backgroundImage = logo;
+            backgroundMode = "logo";
+          }
+        }
       }
     }
 

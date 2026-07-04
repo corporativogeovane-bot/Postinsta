@@ -1,7 +1,7 @@
 /**
- * Reconhece marcas/empresas conhecidas citadas no título da notícia e busca
- * o logo oficial (via Clearbit Logo API, gratuita e sem chave) para usar
- * como fundo em destaque quando a notícia não tem foto própria.
+ * Reconhece marcas/empresas conhecidas citadas no título da notícia, para que
+ * o gerador de imagem possa pedir à IA um fundo com o símbolo dessa marca em
+ * destaque (em vez de uma imagem genérica sem relação com a notícia).
  */
 
 const BRAND_DOMAINS: Record<string, string> = {
@@ -66,8 +66,33 @@ const BRAND_DOMAINS: Record<string, string> = {
   shopee: "shopee.com.br",
 };
 
+// Nomes que não seguem a simples capitalização de cada palavra.
+const DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+  ibm: "IBM",
+  jbs: "JBS",
+  sbt: "SBT",
+  ifood: "iFood",
+  chatgpt: "ChatGPT",
+  openai: "OpenAI",
+  tiktok: "TikTok",
+  nvidia: "NVIDIA",
+  spacex: "SpaceX",
+  paypal: "PayPal",
+  linkedin: "LinkedIn",
+  whatsapp: "WhatsApp",
+  deepmind: "DeepMind",
+  "google deepmind": "Google DeepMind",
+  "banco do brasil": "Banco do Brasil",
+  "magazine luiza": "Magazine Luiza",
+  magalu: "Magazine Luiza",
+  "mercado livre": "Mercado Livre",
+  mercadolivre: "Mercado Livre",
+  "x corp": "X (Twitter)",
+  twitter: "X (Twitter)",
+};
+
 // Frases mais longas primeiro, para "banco do brasil" ganhar de um possível "brasil" solto.
-const SORTED_BRANDS = Object.entries(BRAND_DOMAINS).sort((a, b) => b[0].length - a[0].length);
+const SORTED_BRANDS = Object.keys(BRAND_DOMAINS).sort((a, b) => b.length - a.length);
 
 const COMBINING_DIACRITICS = /[̀-ͯ]/g;
 
@@ -75,15 +100,38 @@ function normalize(text: string): string {
   return text.toLowerCase().normalize("NFD").replace(COMBINING_DIACRITICS, "");
 }
 
-export function detectBrandDomain(title: string): string | null {
+function toDisplayName(keyword: string): string {
+  return DISPLAY_NAME_OVERRIDES[keyword] ?? keyword.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export interface DetectedBrand {
+  keyword: string;
+  domain: string;
+  displayName: string;
+}
+
+export function detectBrand(title: string): DetectedBrand | null {
   const normalizedTitle = ` ${normalize(title)} `;
-  for (const [keyword, domain] of SORTED_BRANDS) {
+  for (const keyword of SORTED_BRANDS) {
     const pattern = new RegExp(`[^a-z0-9]${keyword.replace(/ /g, "\\s+")}[^a-z0-9]`, "i");
-    if (pattern.test(normalizedTitle)) return domain;
+    if (pattern.test(normalizedTitle)) {
+      return { keyword, domain: BRAND_DOMAINS[keyword], displayName: toDisplayName(keyword) };
+    }
   }
   return null;
 }
 
+/** Monta um prompt para a IA desenhar o símbolo da marca bem grande, sem precisar escrever tudo. */
+export function buildBrandSymbolPrompt(displayName: string): string {
+  return [
+    `${displayName} logo icon symbol only`,
+    "single bold minimalist mark, no readable text, no letters spelled out",
+    "huge, centered, filling almost the entire frame",
+    "flat vector design, official brand colors, clean simple background",
+  ].join(", ");
+}
+
+/** Busca o logo oficial exato da marca (Clearbit), como alternativa mais fiel à IA generativa. */
 export async function fetchBrandLogo(domain: string): Promise<Buffer | null> {
   try {
     const res = await fetch(`https://logo.clearbit.com/${domain}?size=800`, {
@@ -95,11 +143,4 @@ export async function fetchBrandLogo(domain: string): Promise<Buffer | null> {
   } catch {
     return null;
   }
-}
-
-/** Busca o logo da marca citada no título, se houver alguma reconhecida. */
-export async function findBrandLogoForTitle(title: string): Promise<Buffer | null> {
-  const domain = detectBrandDomain(title);
-  if (!domain) return null;
-  return fetchBrandLogo(domain);
 }
