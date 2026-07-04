@@ -15,8 +15,12 @@ e, se quiser, salva automaticamente uma cópia numa pasta do Google Drive.
 - Para cada notícia nova, gera uma imagem 1080x1080 (quadrado) ou 1080x1350
   (retrato) usando a foto da notícia como fundo, com um gradiente escuro e o
   título em destaque na frente da imagem.
-- Se a notícia não tiver foto, usa IA gratuita (Pollinations.ai, sem
-  necessidade de chave de API) para gerar uma imagem de fundo a partir do
+- Se a notícia não tiver foto mas mencionar uma marca/empresa conhecida no
+  título (Google, Meta, Apple, Nubank, Petrobras, etc.), busca o **logo
+  oficial** dessa marca (via Clearbit Logo API, gratuita e sem chave) e o
+  coloca bem grande e centralizado no fundo, sobre um card branco.
+- Se não houver foto nem marca reconhecida, usa IA gratuita (Pollinations.ai,
+  sem necessidade de chave de API) para gerar uma imagem de fundo a partir do
   título.
 - Gera automaticamente uma sugestão de legenda + hashtags via IA gratuita.
 - Permite baixar a imagem gerada com um clique.
@@ -81,6 +85,21 @@ exige chave de API, para:
 - Sugerir legenda + hashtags para cada post.
 
 Isso pode ser desligado em Configurações a qualquer momento.
+
+## Logo de marcas conhecidas
+
+Quando o título da notícia menciona uma marca/empresa que o app reconhece
+(lista em `server/src/services/entityImageService.ts`), o logo oficial dela é
+buscado via [Clearbit Logo API](https://clearbit.com/logo) (gratuita, sem
+chave) e usado bem grande no fundo da imagem, no lugar da IA genérica.
+
+Para adicionar mais marcas, edite o objeto `BRAND_DOMAINS` nesse arquivo,
+associando uma palavra-chave (como aparece no título) ao domínio da empresa,
+por exemplo:
+
+```ts
+"banco central": "bcb.gov.br",
+```
 
 ## Variáveis de ambiente (`server/.env`)
 

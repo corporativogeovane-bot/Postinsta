@@ -3,7 +3,8 @@ import path from "node:path";
 import { db } from "../db.js";
 import { GENERATED_DIR } from "../config.js";
 import { generateCaption, generateFallbackImage } from "./aiService.js";
-import { generateInstagramImage, dimensionsFor } from "./imageGenerator.js";
+import { generateInstagramImage, dimensionsFor, type BackgroundMode } from "./imageGenerator.js";
+import { findBrandLogoForTitle } from "./entityImageService.js";
 import { uploadImageToDrive, isDriveConfigured } from "./driveService.js";
 import { getSettings } from "./settingsService.js";
 import type { Post } from "../types.js";
@@ -38,9 +39,20 @@ export async function processPost(
 
   try {
     let backgroundImage: Buffer | null = null;
+    let backgroundMode: BackgroundMode = "photo";
+
     if (input.sourceImageUrl) {
       backgroundImage = await downloadImage(input.sourceImageUrl);
     }
+
+    if (!backgroundImage) {
+      const brandLogo = await findBrandLogoForTitle(input.title);
+      if (brandLogo) {
+        backgroundImage = brandLogo;
+        backgroundMode = "logo";
+      }
+    }
+
     if (!backgroundImage && settings.ai_enabled) {
       backgroundImage = await generateFallbackImage(input.title, width, height);
     }
@@ -50,6 +62,7 @@ export async function processPost(
       sourceLabel: input.feedName,
       format: settings.image_format,
       backgroundImage,
+      backgroundMode,
     });
 
     const fileName = `post-${postId}.jpg`;

@@ -58,11 +58,14 @@ function pickPalette(seed: string): [string, string] {
   return GRADIENT_PALETTES[hash % GRADIENT_PALETTES.length];
 }
 
+export type BackgroundMode = "photo" | "logo";
+
 interface GenerateOptions {
   title: string;
   sourceLabel: string;
   format: ImageFormat;
   backgroundImage?: Buffer | null;
+  backgroundMode?: BackgroundMode;
 }
 
 export async function generateInstagramImage({
@@ -70,11 +73,18 @@ export async function generateInstagramImage({
   sourceLabel,
   format,
   backgroundImage,
+  backgroundMode = "photo",
 }: GenerateOptions): Promise<Buffer> {
   const { width, height } = DIMENSIONS[format];
 
   let background: Buffer;
-  if (backgroundImage) {
+  if (backgroundImage && backgroundMode === "logo") {
+    try {
+      background = await buildLogoBackground(backgroundImage, width, height);
+    } catch {
+      background = await buildGradientBackground(title, width, height);
+    }
+  } else if (backgroundImage) {
     try {
       background = await sharp(backgroundImage)
         .resize(width, height, { fit: "cover", position: "attention" })
@@ -149,6 +159,59 @@ async function buildGradientBackground(
     </svg>
   `;
   return sharp(Buffer.from(svg)).png().toBuffer();
+}
+
+/**
+ * Monta um fundo com o logo da marca bem grande e centralizado, sobre um
+ * card branco, com um fundo desfocado nas cores da própria marca por trás.
+ */
+async function buildLogoBackground(
+  logoBuffer: Buffer,
+  width: number,
+  height: number
+): Promise<Buffer> {
+  const flattened = await sharp(logoBuffer)
+    .flatten({ background: "#f1f5f9" })
+    .toBuffer();
+
+  const backdrop = await sharp(flattened)
+    .resize(width, height, { fit: "cover" })
+    .blur(70)
+    .modulate({ brightness: 0.45 })
+    .toBuffer();
+
+  const cardWidth = Math.round(width * 0.74);
+  const maxLogoWidth = cardWidth - 100;
+  const maxLogoHeight = Math.round(height * 0.32);
+
+  const logo = await sharp(logoBuffer)
+    .resize({
+      width: maxLogoWidth,
+      height: maxLogoHeight,
+      fit: "contain",
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .toBuffer();
+  const logoMeta = await sharp(logo).metadata();
+  const logoWidth = logoMeta.width ?? maxLogoWidth;
+  const logoHeight = logoMeta.height ?? maxLogoHeight;
+
+  const cardHeight = logoHeight + 100;
+  const cardSvg = `<svg width="${cardWidth}" height="${cardHeight}" xmlns="http://www.w3.org/2000/svg"><rect width="${cardWidth}" height="${cardHeight}" rx="28" fill="#ffffff" /></svg>`;
+  const card = await sharp(Buffer.from(cardSvg)).png().toBuffer();
+
+  const cardLeft = Math.round((width - cardWidth) / 2);
+  const cardTop = Math.round(height * 0.09);
+  const logoLeft = cardLeft + Math.round((cardWidth - logoWidth) / 2);
+  const logoTop = cardTop + Math.round((cardHeight - logoHeight) / 2);
+
+  return sharp(backdrop)
+    .composite([
+      { input: card, left: cardLeft, top: cardTop },
+      { input: logo, left: logoLeft, top: logoTop },
+    ])
+    .jpeg({ quality: 92 })
+    .toBuffer();
 }
 
 export function dimensionsFor(format: ImageFormat) {
