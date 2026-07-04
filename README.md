@@ -77,6 +77,16 @@ Abra `http://localhost:5173`.
 7. Ative "Salvar automaticamente" em Configurações se quiser que toda imagem
    gerada suba sozinha para o Dropbox.
 
+Para conferir se o token está funcionando antes de rodar o app inteiro:
+
+```bash
+cd server
+npm run test:dropbox
+```
+
+Isso envia uma imagem de teste para a pasta configurada e mostra o link
+gerado (ou o erro, se algo estiver errado).
+
 ## IA gratuita
 
 O app usa a [Pollinations.ai](https://pollinations.ai), que é gratuita e não
